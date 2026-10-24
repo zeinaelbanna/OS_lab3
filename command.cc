@@ -226,22 +226,145 @@ void Command::print()
 void Command::execute()
 {
     print();
+    if (_numberOfSimpleCommands == 0)
+    {
+	clear();
+	return;
+    }
+    int oldin = dup(0);
+    int oldout =dup(1);
+    int olderr =dup(2);
+    
+    int fin;
+    if (_inputFile)
+    {
+	fin = open(_inputFile,O_RDONLY);
+	if (fin <0 )
+	{
+		perror(_inputFile);
+		close(oldin);
+		close(oldout);
+		close(olderr);
+		clear();
+		return;
+         }
+     }
+	else
+		fin = dup(oldin);
+
+     int fout =-1;
+     if (_outFile)
+     {
+	int flags  = O_WR | O_CR | (_append ? O_APP : O_ER );
+	fout = open(_outFile, flags, 0644);
+	if (fout <0 )
+        {
+                perror(_outFile);
+                close(oldin);
+                close(oldout);
+                close(olderr);
+		close(fin);
+                clear();
+                return;
+         }
+     }
+
+     int ferr ;
+     if (_out_error && fout >= 0)
+	ferr = dup(fout);
+     else if(_errFile)
+     {
+	ferr = open(_errFile,O_WR |O_CR |O_ER ,0644);
+	if (ferr <0 )
+        {
+                perror(_errFile);
+                close(oldin);
+                close(oldout);
+                close(olderr);
+		close(fin);
+		if (fout >=0)
+		   close(fout);
+                clear();
+                return;
+         }
+     }
+     else
+	ferr = dup (olderr);
+
+    int pid = 0;
+    for (int i = 0; i < _numberOfSimpleCommands; i++)
+    {
+        dup2(fin, 0);
+        close(fin);
+
+        int Ofile;
+        if (i == _numberOfSimpleCommands - 1)
+       
+            if (fout >= 0)
+                Ofile = fout;
+            else
+                Ofile = dup(oldout);
+        }
+        else
+        {
+            int fdpipe[2];
+            pipe(fdpipe);
+            Ofile = fdpipe[1];
+            fin= fdpipe[0];
+        }
+
+        dup2(Ofile, 1);
+        close(Ofile);
+        dup2(ferr, 2);
+
+        pid = fork();
+        if (pid < 0)
+        {
+            perror("fork");
+            break;
+        } 
+	if (pid == 0)
+        {
+            close(ferr);
+	    close(oldin);
+	    close(oldout);
+	    close(olderr);
+            char **args = _simpleCommands[i]->_arguments;
+            execvp(args[0], args);
+            perror(args[0]);
+            _exit(1);
+        }
+    }
+
+    dup2(oldin, 0);
+    dup2(oldout, 1);
+    dup2(olderr, 2);
+    close(oldin);
+    close(oldout);
+    close(olderr);
+    close(ferr);
+
+    if (!_background)
+        waitpid(pid, NULL, 0);
+
+
+
     /*
         Write your code here
     */
 
     clear();
-    prompt();
 }
 
 void Command::prompt()
+
 {
-    printf("myshell>");
-    fflush(stdout);
     std::string input;
     while (true)
-    {
-        std::getline(std::cin, input); 
+    {   printf("myshell>");
+        fflush(stdout);
+        if(!std::getline(std::cin, input))
+		break; 
         std::vector<Token> tokens = tokenize(input);
         parse(tokens);
     }
