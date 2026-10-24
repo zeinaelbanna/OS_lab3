@@ -231,6 +231,23 @@ void Command::execute()
 	clear();
 	return;
     }
+    char **first = _simpleCommands[0]->_arguments;
+
+    if (_numberOfSimpleCommands == 1 && strcmp(first[0], "exit") == 0)
+    {
+        printf("Good bye!!\n");
+        clear();
+        exit(0);
+    }
+
+    if (_numberOfSimpleCommands == 1 && strcmp(first[0], "cd") == 0)
+    {
+        const char *dir = first[1] ? first[1] : getenv("HOME");
+        if (dir == NULL || chdir(dir) != 0)
+            perror("cd");
+        clear();
+        return;
+    }
     int oldin = dup(0);
     int oldout =dup(1);
     int olderr =dup(2);
@@ -255,7 +272,7 @@ void Command::execute()
      int fout =-1;
      if (_outFile)
      {
-	int flags  = O_WR | O_CR | (_append ? O_APP : O_ER );
+	int flags  = O_WRONLY | O_CREAT | (_append ? O_APPEND : O_TRUNC );
 	fout = open(_outFile, flags, 0644);
 	if (fout <0 )
         {
@@ -274,7 +291,7 @@ void Command::execute()
 	ferr = dup(fout);
      else if(_errFile)
      {
-	ferr = open(_errFile,O_WR |O_CR |O_ER ,0644);
+	ferr = open(_errFile,O_WRONLY |O_CREAT |O_TRUNC ,0644);
 	if (ferr <0 )
         {
                 perror(_errFile);
@@ -299,11 +316,11 @@ void Command::execute()
 
         int Ofile;
         if (i == _numberOfSimpleCommands - 1)
-       
-            if (fout >= 0)
-                Ofile = fout;
-            else
-                Ofile = dup(oldout);
+       {
+            if (fout >= 0){
+                Ofile = fout;}
+            else{
+                Ofile = dup(oldout);}
         }
         else
         {
@@ -313,9 +330,9 @@ void Command::execute()
             fin= fdpipe[0];
         }
 
-        dup2(Ofile, 1);
-        close(Ofile);
-        dup2(ferr, 2);
+        dup2 ( Ofile, 1);
+        close ( Ofile);
+        dup2 ( ferr, 2);
 
         pid = fork();
         if (pid < 0)
@@ -330,6 +347,7 @@ void Command::execute()
 	    close(oldout);
 	    close(olderr);
             char **args = _simpleCommands[i]->_arguments;
+	    signal(SIGINT,SIG_DFL);
             execvp(args[0], args);
             perror(args[0]);
             _exit(1);
@@ -363,8 +381,8 @@ void Command::prompt()
     while (true)
     {   printf("myshell>");
         fflush(stdout);
-        if(!std::getline(std::cin, input))
-		break; 
+        if(!std::getline(std::cin, input)){
+		break; }
         std::vector<Token> tokens = tokenize(input);
         parse(tokens);
     }
@@ -373,8 +391,31 @@ void Command::prompt()
 Command Command::_currentCommand;
 SimpleCommand *Command::_currentSimpleCommand;
 
-int main()
+void handleChild(int sig)
 {
+    int status;
+    pid_t pid;
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+    {
+        FILE *f = fopen("shell.log", "a");
+        if (f)
+        {
+            fprintf(f, "Child %d terminated\n", pid);
+            fclose(f);
+        }
+    }
+}
+
+int main()
+{   
+   signal(SIGINT, SIG_IGN);
+
+    struct sigaction sa;
+    sa.sa_handler = handleChild;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &sa, NULL); 
+
     Command::_currentCommand.prompt();
     return 0;
 }
