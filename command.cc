@@ -38,6 +38,69 @@ void parse(std::vector<Token> &tokens)
          {
          currentSimpleCommand->insertArgument(strdup(tokens[i].value.c_str()));
        	}
+	else if (tokens[i].type == TOKEN_REDIRECT)
+	{ 
+		if (tokens[i+1].type != TOKEN_ARGUMENT)
+		{ printf ("error file name missing") ;
+	        	return;}
+		currentCommand._outFile= strdup(tokens[i+1].value.c_str());
+		i++;
+	}
+	else if (tokens[i].type == TOKEN_APPEND)
+        { 
+                if (tokens[i+1].type != TOKEN_ARGUMENT)
+                { printf ("error file name missing") ;
+                        return;}
+                currentCommand._outFile= strdup(tokens[i+1].value.c_str());
+                currentCommand._append=1;
+		 i++;
+        }
+	else if (tokens[i].type == TOKEN_INPUT)
+        { 
+                if (tokens[i+1].type != TOKEN_ARGUMENT)
+                { printf ("error file name missing") ;
+                        return;}
+                currentCommand._inputFile= strdup(tokens[i+1].value.c_str());
+                i++;
+        }
+
+
+	else if (tokens[i].type == TOKEN_ERROR)
+        { 
+                if (tokens[i+1].type != TOKEN_ARGUMENT)
+                { printf ("error file name missing") ;
+                        return;}
+                currentCommand._errFile= strdup(tokens[i+1].value.c_str());
+                i++;
+        }
+	else if (tokens[i].type == TOKEN_REDIRECT_AND_ERROR)
+        { 
+                if (tokens[i+1].type != TOKEN_ARGUMENT)
+                { printf ("error file name missing") ;
+                        return;}
+                currentCommand._outFile= strdup(tokens[i+1].value.c_str());
+		currentCommand._errFile= strdup(tokens[i+1].value.c_str());
+		currentCommand._append=1;
+		currentCommand._out_error=1;
+                i++;
+        }
+	else if (tokens[i].type == TOKEN_PIPE)
+        { 
+                if (currentSimpleCommand->_numberOfArguments==0)
+                { printf ("error nothing before pipe") ;
+                        return;}
+                currentCommand.insertSimpleCommand(currentSimpleCommand);
+                currentSimpleCommand =new SimpleCommand();
+        }
+	else if (tokens[i].type == TOKEN_BACKGROUND)
+	{
+		currentCommand._background =1;
+	}
+
+   }
+   if (currentSimpleCommand->_numberOfArguments ==0){
+	printf("error empty command");
+	return;
 	}
     currentCommand.insertSimpleCommand(currentSimpleCommand);
     currentCommand.execute();
