@@ -33,7 +33,13 @@ void parse(std::vector<Token> &tokens)
 {
     Command currentCommand;
     SimpleCommand *currentSimpleCommand = new SimpleCommand();
-
+    for (size_t i = 0; i< tokens.size();i++){
+	 if (tokens[i].type == TOKEN_COMMAND || tokens[i].type == TOKEN_ARGUMENT)
+         {
+         currentSimpleCommand->insertArgument(strdup(tokens[i].value.c_str()));
+       	}
+	}
+    currentCommand.insertSimpleCommand(currentSimpleCommand);
     currentCommand.execute();
     /*
       Implement this function 
