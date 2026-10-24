@@ -69,13 +69,15 @@ Command::Command()
 {
     _numberOfAvailableSimpleCommands = 1;
     _simpleCommands = (SimpleCommand **)
-        malloc(_numberOfSimpleCommands * sizeof(SimpleCommand *));
+        malloc(_numberOfAvailableSimpleCommands * sizeof(SimpleCommand *));
 
     _numberOfSimpleCommands = 0;
     _outFile = 0;
     _inputFile = 0;
     _errFile = 0;
     _background = 0;
+    _out_error = 0;
+    _append = 0;
 }
 
 void Command::insertSimpleCommand(SimpleCommand *simpleCommand)
