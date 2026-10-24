@@ -47,7 +47,7 @@ void parse(std::vector<Token> &tokens)
 	else if (tokens[i].type == TOKEN_REDIRECT)
 	{ 
 		if (tokens[i+1].type != TOKEN_ARGUMENT)
-		{ printf ("error file name missing") ;
+		{ printf ("error file name missing\n") ;
 	        	return;}
 		currentCommand._outFile= strdup(tokens[i+1].value.c_str());
 		i++;
@@ -55,7 +55,7 @@ void parse(std::vector<Token> &tokens)
 	else if (tokens[i].type == TOKEN_APPEND)
         { 
                 if (tokens[i+1].type != TOKEN_ARGUMENT)
-                { printf ("error file name missing") ;
+                { printf ("error file name missing\n") ;
                         return;}
                 currentCommand._outFile= strdup(tokens[i+1].value.c_str());
                 currentCommand._append=1;
@@ -64,7 +64,7 @@ void parse(std::vector<Token> &tokens)
 	else if (tokens[i].type == TOKEN_INPUT)
         { 
                 if (tokens[i+1].type != TOKEN_ARGUMENT)
-                { printf ("error file name missing") ;
+                { printf ("error file name missing\n") ;
                         return;}
                 currentCommand._inputFile= strdup(tokens[i+1].value.c_str());
                 i++;
@@ -74,7 +74,7 @@ void parse(std::vector<Token> &tokens)
 	else if (tokens[i].type == TOKEN_ERROR)
         { 
                 if (tokens[i+1].type != TOKEN_ARGUMENT)
-                { printf ("error file name missing") ;
+                { printf ("error file name missing\n") ;
                         return;}
                 currentCommand._errFile= strdup(tokens[i+1].value.c_str());
                 i++;
@@ -82,7 +82,7 @@ void parse(std::vector<Token> &tokens)
 	else if (tokens[i].type == TOKEN_REDIRECT_AND_ERROR)
         { 
                 if (tokens[i+1].type != TOKEN_ARGUMENT)
-                { printf ("error file name missing") ;
+                { printf ("error file name missing\n") ;
                         return;}
                 currentCommand._outFile= strdup(tokens[i+1].value.c_str());
 		currentCommand._errFile= strdup(tokens[i+1].value.c_str());
@@ -93,7 +93,7 @@ void parse(std::vector<Token> &tokens)
 	else if (tokens[i].type == TOKEN_PIPE)
         { 
                 if (currentSimpleCommand->_numberOfArguments==0)
-                { printf ("error nothing before pipe") ;
+                { printf ("error nothing before pipe\n") ;
                         return;}
                 currentCommand.insertSimpleCommand(currentSimpleCommand);
                 currentSimpleCommand =new SimpleCommand();
@@ -105,7 +105,7 @@ void parse(std::vector<Token> &tokens)
 
    }
    if (currentSimpleCommand->_numberOfArguments ==0){
-	printf("error empty command");
+	printf("error empty command\n");
 	return;
 	}
     currentCommand.insertSimpleCommand(currentSimpleCommand);
@@ -201,6 +201,8 @@ void Command::clear()
     _inputFile = 0;
     _errFile = 0;
     _background = 0;
+    _out_error=0;
+    _append=0;
 }
 
 void Command::print()
@@ -271,7 +273,7 @@ void Command::execute()
 		clear();
 		return;
          }
-     }
+      }
 	else
 		fin = dup(oldin);
 
