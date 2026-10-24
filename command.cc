@@ -25,6 +25,7 @@
 #include <cctype>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include "command.h"
 #include "tokenizer.h"
 
@@ -33,7 +34,12 @@ void parse(std::vector<Token> &tokens)
 {
     Command currentCommand;
     SimpleCommand *currentSimpleCommand = new SimpleCommand();
-    for (size_t i = 0; i< tokens.size();i++){
+    
+    for ( size_t i =0;i < tokens.size() ; i++) {
+	std::string &v = tokens[i].value;
+	v.erase(std::remove(v.begin() ,v.end() , '"'), v.end() );
+    }   
+     for (size_t i = 0; i< tokens.size();i++){
 	 if (tokens[i].type == TOKEN_COMMAND || tokens[i].type == TOKEN_ARGUMENT)
          {
          currentSimpleCommand->insertArgument(strdup(tokens[i].value.c_str()));
@@ -225,7 +231,7 @@ void Command::print()
 
 void Command::execute()
 {
-    print();
+    //print();
     if (_numberOfSimpleCommands == 0)
     {
 	clear();
